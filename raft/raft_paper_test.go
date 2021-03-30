@@ -162,7 +162,7 @@ func testNonleaderStartElection(t *testing.T, state StateType) {
 }
 
 // TestLeaderElectionInOneRoundRPC tests all cases that may happen in
-// leader election during one round of RequestVote RPC:
+// leader election during one `round` of RequestVote RPC:
 // a) it wins the election
 // b) it loses the election
 // c) it is unclear about the result
@@ -188,7 +188,8 @@ func TestLeaderElectionInOneRoundRPC2AA(t *testing.T) {
 		{5, map[uint64]bool{}, StateCandidate},
 	}
 	for i, tt := range tests {
-		r := newTestRaft(1, idsBySize(tt.size), 10, 1, NewMemoryStorage())
+		peers := idsBySize(tt.size)
+		r := newTestRaft(1, peers, 10, 1, NewMemoryStorage())
 
 		r.Step(pb.Message{From: 1, To: 1, MsgType: pb.MessageType_MsgHup})
 		for id, vote := range tt.votes {
@@ -249,6 +250,7 @@ func TestCandidateFallback2AA(t *testing.T) {
 	}
 	for i, tt := range tests {
 		r := newTestRaft(1, []uint64{1, 2, 3}, 10, 1, NewMemoryStorage())
+		// 先变成leader？然后接收其他peer的RPC
 		r.Step(pb.Message{From: 1, To: 1, MsgType: pb.MessageType_MsgHup})
 		if r.State != StateCandidate {
 			t.Fatalf("unexpected state = %s, want %s", r.State, StateCandidate)

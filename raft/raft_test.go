@@ -72,8 +72,10 @@ func TestLeaderElection2AA(t *testing.T) {
 		expTerm uint64
 	}{
 		{newNetworkWithConfig(cfg, nil, nil, nil), StateLeader, 1},
+		// 超过半数
 		{newNetworkWithConfig(cfg, nil, nil, nopStepper), StateLeader, 1},
 		{newNetworkWithConfig(cfg, nil, nopStepper, nopStepper), StateCandidate, 1},
+		// 不超过半数
 		{newNetworkWithConfig(cfg, nil, nopStepper, nopStepper, nil), StateCandidate, 1},
 		{newNetworkWithConfig(cfg, nil, nopStepper, nopStepper, nil, nil), StateLeader, 1},
 	}
@@ -631,7 +633,7 @@ func TestRecvMessageType_MsgRequestVote2AA(t *testing.T) {
 		sm.Vote = tt.voteFor
 		sm.RaftLog = newLog(&MemoryStorage{ents: []pb.Entry{{}, {Index: 1, Term: 2}, {Index: 2, Term: 2}}})
 
-		// raft.Term is greater than or equal to raft.RaftLog.lastTerm. In this
+		// raft.Term is greater than or equal to raft.RaftLog.LastTerm. In this
 		// test we're only testing MessageType_MsgRequestVote responses when the campaigning node
 		// has a different raft log compared to the recipient node.
 		// Additionally we're verifying behaviour when the recipient node has
@@ -981,7 +983,7 @@ func TestRestoreSnapshot2C(t *testing.T) {
 		t.Errorf("log.lastIndex = %d, want %d", sm.RaftLog.LastIndex(), s.Metadata.Index)
 	}
 	if mustTerm(sm.RaftLog.Term(s.Metadata.Index)) != s.Metadata.Term {
-		t.Errorf("log.lastTerm = %d, want %d", mustTerm(sm.RaftLog.Term(s.Metadata.Index)), s.Metadata.Term)
+		t.Errorf("log.LastTerm = %d, want %d", mustTerm(sm.RaftLog.Term(s.Metadata.Index)), s.Metadata.Term)
 	}
 	sg := nodes(sm)
 	if !reflect.DeepEqual(sg, s.Metadata.ConfState.Nodes) {
@@ -1568,7 +1570,9 @@ func newNetworkWithConfig(configFunc func(*Config), peers ...stateMachine) *netw
 
 func (nw *network) send(msgs ...pb.Message) {
 	for len(msgs) > 0 {
+		// 发送的信息
 		m := msgs[0]
+		// 信息要发送的节点：
 		p := nw.peers[m.To]
 		p.Step(m)
 		msgs = append(msgs[1:], nw.filter(p.readMessages())...)

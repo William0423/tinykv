@@ -14,7 +14,10 @@
 
 package raft
 
-import pb "github.com/pingcap-incubator/tinykv/proto/pkg/eraftpb"
+import (
+	"github.com/pingcap-incubator/tinykv/log"
+	pb "github.com/pingcap-incubator/tinykv/proto/pkg/eraftpb"
+)
 
 // RaftLog manage the log entries, its struct look like:
 //
@@ -84,8 +87,20 @@ func (l *RaftLog) LastIndex() uint64 {
 	return 0
 }
 
+func (l *RaftLog) LastTerm() uint64 {
+	t, err := l.Term(l.LastIndex())
+	if err != nil {
+		log.Panicf("unexpected error when getting the last term (%v)", err)
+	}
+	return t
+}
+
 // Term return the term of the entry in the given index
 func (l *RaftLog) Term(i uint64) (uint64, error) {
 	// Your Code Here (2A).
 	return 0, nil
+}
+
+func (l *RaftLog) isUpToDate(lasti, term uint64) bool {
+	return term > l.LastTerm() || (term == l.LastTerm() && lasti >= l.LastIndex())
 }
